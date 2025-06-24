@@ -101,28 +101,28 @@ class ResourceSchedulingConstraintProviderTest {
     void atLeast10HoursBetweenConsecutiveShifts() {
         Resource resource1 = new Resource("Amy", null, null, null, null, null);
         Resource resource2 = new Resource("Beth", null, null, null, null, null);
-        constraintVerifier.verifyThat(EmployeeSchedulingConstraintProvider::atLeast10HoursBetweenTwoShifts)
+        constraintVerifier.verifyThat((provider, c) -> provider.atLeastHoursBetweenTwoShifts(c, 12))
                 .given(resource1, resource2,
                         new Demand("1", DAY_START_TIME, DAY_END_TIME, "Location", "Skill", resource1),
                         new Demand("2", AFTERNOON_END_TIME, DAY_START_TIME.plusDays(1), "Location 2", "Skill", resource1))
                 .penalizesBy(360);
-        constraintVerifier.verifyThat(EmployeeSchedulingConstraintProvider::atLeast10HoursBetweenTwoShifts)
+        constraintVerifier.verifyThat((provider, c) -> provider.atLeastHoursBetweenTwoShifts(c, 12))
                 .given(resource1, resource2,
                         new Demand("1", DAY_START_TIME, DAY_END_TIME, "Location", "Skill", resource1),
                         new Demand("2", DAY_END_TIME, DAY_START_TIME.plusDays(1), "Location 2", "Skill", resource1))
                 .penalizesBy(600);
-        constraintVerifier.verifyThat(EmployeeSchedulingConstraintProvider::atLeast10HoursBetweenTwoShifts)
+        constraintVerifier.verifyThat((provider, c) -> provider.atLeastHoursBetweenTwoShifts(c, 12))
                 .given(resource1, resource2,
                         new Demand("1", DAY_END_TIME, DAY_START_TIME.plusDays(1), "Location", "Skill", resource1),
                         new Demand("2", DAY_START_TIME, DAY_END_TIME, "Location 2", "Skill", resource1))
                 .penalizesBy(600);
-        constraintVerifier.verifyThat(EmployeeSchedulingConstraintProvider::atLeast10HoursBetweenTwoShifts)
+        constraintVerifier.verifyThat((provider, c) -> provider.atLeastHoursBetweenTwoShifts(c, 12))
                 .given(resource1, resource2,
                         new Demand("1", DAY_START_TIME, DAY_END_TIME, "Location", "Skill", resource1),
                         new Demand("2", DAY_END_TIME.plusHours(10), DAY_START_TIME.plusDays(1), "Location 2", "Skill",
                             resource1))
                 .penalizes(0);
-        constraintVerifier.verifyThat(EmployeeSchedulingConstraintProvider::atLeast10HoursBetweenTwoShifts)
+        constraintVerifier.verifyThat((provider, c) -> provider.atLeastHoursBetweenTwoShifts(c, 12))
                 .given(resource1, resource2,
                         new Demand("1", DAY_START_TIME, DAY_END_TIME, "Location", "Skill", resource1),
                         new Demand("2", AFTERNOON_END_TIME, DAY_START_TIME.plusDays(1), "Location 2", "Skill", resource2))
