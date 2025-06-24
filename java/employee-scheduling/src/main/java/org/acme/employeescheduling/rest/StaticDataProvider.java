@@ -2,7 +2,6 @@ package org.acme.employeescheduling.rest;
 
 import org.acme.employeescheduling.domain.Demand;
 
-import java.util.Collection;
 import java.util.List;
 
 public class StaticDataProvider {

@@ -13,19 +13,14 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class DemandDataProvider {
 
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-    public static void main(String[] args) throws IOException {
-        var demands = new DemandDataProvider().readDemands();
-        System.out.println(demands.size());
-    }
 
-    public List<Demand> readDemands() {
+    public static List<Demand> readDemands() {
         File csvData = new File("java/employee-scheduling/src/main/resources/BSA_Export_Schichten_Mai-bis-August.csv");
         List<Demand> demands = new LinkedList<>();
         int currentId = 0;
@@ -57,23 +52,23 @@ public class DemandDataProvider {
         return demands;
     }
 
-    private LocalDateTime getStartTime(CSVRecord record) {
+    private static LocalDateTime getStartTime(CSVRecord record) {
         return LocalDateTime.parse(record.get("Schichtstart"), FORMATTER);
     }
 
-    private LocalDateTime getEndTime(CSVRecord record) {
+    private static LocalDateTime getEndTime(CSVRecord record) {
         return LocalDateTime.parse(record.get("Schichtende"), FORMATTER);
     }
 
-    private String getConstructionSite(CSVRecord record) {
+    private static String getConstructionSite(CSVRecord record) {
         return record.get("BSA-ID");
     }
 
-    private String getRequiredResourceCategory(CSVRecord record) {
+    private static String getRequiredResourceCategory(CSVRecord record) {
         return record.get("Ressourcenkategorie-Typ");
     }
 
-    private Set<String> getRequiredQualifications(CSVRecord record) {
+    private static Set<String> getRequiredQualifications(CSVRecord record) {
         return Set.of(record.get("Qualifikationen").split(","));
     }
 }
