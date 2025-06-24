@@ -38,19 +38,19 @@ public class Schedule {
         this.solverStatus = solverStatus;
     }
 
-    public List<Resource> getEmployees() {
+    public List<Resource> getResources() {
         return resources;
     }
 
-    public void setEmployees(List<Resource> resources) {
+    public void setResources(List<Resource> resources) {
         this.resources = resources;
     }
 
-    public List<Demand> getShifts() {
+    public List<Demand> getDemands() {
         return demands;
     }
 
-    public void setShifts(List<Demand> demands) {
+    public void setDemands(List<Demand> demands) {
         this.demands = demands;
     }
 

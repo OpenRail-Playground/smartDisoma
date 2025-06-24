@@ -2,7 +2,7 @@
 <head>
     <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
     <meta content="width=device-width, initial-scale=1" name="viewport">
-    <title>Employee scheduling - Timefold Solver on Quarkus</title>
+    <title>Resource scheduling - Timefold Solver on Quarkus</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vis-timeline@7.7.2/styles/vis-timeline-graph2d.min.css"
           integrity="sha256-svzNasPg1yR5gvEaRei2jg+n4Pc3sVyMUWeS6xRAh6U=" crossorigin="anonymous">
@@ -28,7 +28,7 @@
              aria-atomic="true">
             <div id="notificationPanel" style="position: absolute; top: .5rem;"></div>
         </div>
-        <h1>Employee scheduling solver</h1>
+        <h1>Resource scheduling solver</h1>
         <p>Generate the optimal schedule for your resources.</p>
 
         <div class="mb-4">
@@ -38,7 +38,7 @@
             <button id="stopSolvingButton" type="button" class="btn btn-danger">
                 <span class="fas fa-stop"></span> Stop solving
             </button>
-            <span id="unassignedShifts" class="ms-2 align-middle fw-bold"></span>
+            <span id="unassignedDemands" class="ms-2 align-middle fw-bold"></span>
             <span id="score" class="score ms-2 align-middle fw-bold">Score: ?</span>
             <button id="analyzeButton" type="button" class="ms-2 btn btn-secondary">
                 <span class="fas fa-question"></span>
@@ -47,27 +47,27 @@
             <div class="float-end">
                 <ul class="nav nav-pills" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="byLocationTab" data-bs-toggle="tab"
-                                data-bs-target="#byLocationPanel" type="button" role="tab"
-                                aria-controls="byLocationPanel" aria-selected="true">By location
+                        <button class="nav-link active" id="byConstructionSiteTab" data-bs-toggle="tab"
+                                data-bs-target="#byConstructionSitePanel" type="button" role="tab"
+                                aria-controls="byConstructionSitePanel" aria-selected="true">By construction site
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="byEmployeeTab" data-bs-toggle="tab"
-                                data-bs-target="#byEmployeePanel" type="button" role="tab"
-                                aria-controls="byEmployeePanel" aria-selected="false">By resource
+                        <button class="nav-link" id="byResourceTab" data-bs-toggle="tab"
+                                data-bs-target="#byResourcePanel" type="button" role="tab"
+                                aria-controls="byResourcePanel" aria-selected="false">By resource
                         </button>
                     </li>
                 </ul>
             </div>
         </div>
         <div class="mb-4 tab-content">
-            <div class="tab-pane fade show active" id="byLocationPanel" role="tabpanel"
-                 aria-labelledby="byLocationTab">
-                <div id="locationVisualization"></div>
+            <div class="tab-pane fade show active" id="byConstructionSitePanel" role="tabpanel"
+                 aria-labelledby="byConstructionSiteTab">
+                <div id="constructionSiteVisualization"></div>
             </div>
-            <div class="tab-pane fade" id="byEmployeePanel" role="tabpanel" aria-labelledby="byEmployeeTab">
-                <div id="employeeVisualization"></div>
+            <div class="tab-pane fade" id="byResourcePanel" role="tabpanel" aria-labelledby="byResourceTab">
+                <div id="resourceVisualization"></div>
             </div>
         </div>
     </div>
@@ -75,7 +75,7 @@
     <div id="rest" class="tab-pane fade  container-fluid">
         <h1>REST API Guide</h1>
 
-        <h2>Employee Scheduling solver integration via cURL</h2>
+        <h2>Resource Scheduling solver integration via cURL</h2>
 
         <h3>1. Download demo data</h3>
         <pre>

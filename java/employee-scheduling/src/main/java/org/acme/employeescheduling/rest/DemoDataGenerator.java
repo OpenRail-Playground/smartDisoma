@@ -141,7 +141,7 @@ public class DemoDataGenerator {
             Resource resource = new Resource(namePermutations.get(i), resourceCategory, qualifications, new LinkedHashSet<>(), new LinkedHashSet<>(), team);
             resources.add(resource);
         }
-        schedule.setEmployees(resources);
+        schedule.setResources(resources);
 
         List<Demand> demands = new LinkedList<>();
         for (int i = 0; i < parameters.daysInSchedule; i++) {
@@ -158,7 +158,7 @@ public class DemoDataGenerator {
         }
         AtomicInteger countShift = new AtomicInteger();
         demands.forEach(s -> s.setId(Integer.toString(countShift.getAndIncrement())));
-        schedule.setShifts(demands);
+        schedule.setDemands(demands);
 
         return schedule;
     }
