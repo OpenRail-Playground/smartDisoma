@@ -27,7 +27,6 @@ import org.acme.employeescheduling.domain.Demand;
 import org.acme.employeescheduling.domain.Resource;
 import org.acme.employeescheduling.domain.Schedule;
 import org.instancio.Instancio;
-import org.instancio.generator.Generator;
 
 @ApplicationScoped
 public class DemoDataGenerator {
@@ -131,8 +130,12 @@ public class DemoDataGenerator {
     private Resource generateResource() {
         return Instancio.of(Resource.class)
             .supply(field(Resource::getName), res -> new Faker().funnyName().name())
-            .supply(field(Resource::getResourceCategory), )
+            .supply(field(Resource::getResourceCategory), res -> getRandomValueFrom(StaticDataProvider.getResourceCategories()))
             .create();
+    }
+
+    private static String getRandomValueFrom(List<String> possibleValues) {
+        return possibleValues.get(new Random().nextInt(possibleValues.size()));
     }
 
     private Schedule generateDemoData(DemoDataParameters parameters) {

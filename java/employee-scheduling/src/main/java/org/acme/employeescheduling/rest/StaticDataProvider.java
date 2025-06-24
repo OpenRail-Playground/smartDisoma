@@ -5,7 +5,7 @@ import java.util.List;
 
 public class StaticDataProvider {
 
-    public static Collection<String> getResourceCategories() {
+    public static List<String> getResourceCategories() {
         return List.of(
             "Arbeitsleiter/in",
             "Arbeitsstellenkoordinator/in",
@@ -49,7 +49,7 @@ public class StaticDataProvider {
         );
     }
 
-    public static Collection<String> getQualifications() {
+    public static List<String> getQualifications() {
         return List.of(
             "Bauleiter",
             "Güterzugsmodul",
