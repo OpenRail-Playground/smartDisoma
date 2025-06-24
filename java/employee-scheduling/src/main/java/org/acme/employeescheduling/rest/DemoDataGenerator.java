@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import net.datafaker.Faker;
@@ -88,23 +87,20 @@ public class DemoDataGenerator {
 
         schedule.setDemands(DemandDataProvider.readDemands().subList(0, 1000));
 
-        schedule.setResources(IntStream.range(0, 73)
-            .mapToObj(i -> generateResource())
-            .collect(Collectors.toList())
-        );
-
+        schedule.setResources(generateResources());
         calculateRandomAvailability(DemoData.SMALL.getParameters(), schedule.getResources());
-
         return schedule;
     }
 
-    private Resource generateResource() {
-        Faker faker = new Faker();
-        return Instancio.of(Resource.class)
-            .supply(field(Resource::getName), res -> UUID.randomUUID().toString())
-            .supply(field(Resource::getResourceCategory), res -> getRandomValueFrom(StaticDataProvider.getResourceCategories()))
-            .supply(field(Resource::getQualifications), res -> randomQualifications())
-            .create();
+    private List<Resource> generateResources() {
+        return StaticDataProvider.RESOURCES.stream()
+            .map(DemoDataGenerator::assignRandomQualifications)
+            .collect(Collectors.toList());
+    }
+
+    private static Resource assignRandomQualifications(Resource resource) {
+        resource.setQualifications(randomQualifications());
+        return resource;
     }
 
     private static Set<String> randomQualifications() {
@@ -127,7 +123,7 @@ public class DemoDataGenerator {
         Random random = new Random(parameters.randomSeed);
         for (int i = 0; i < parameters.daysInSchedule; i++) {
             Set<Resource> resourceWithAvailabilitiesOnDay = pickSubset(resources, random,
-                AVAILABILITY_COUNT_DISTRIBUTION_LARGE);
+                    AVAILABILITY_COUNT_DISTRIBUTION);
             LocalDate date = startDate.plusDays(i);
             for (Resource resource : resourceWithAvailabilitiesOnDay) {
                 switch (random.nextInt(3)) {
