@@ -1,26 +1,26 @@
 @startuml
 'https://plantuml.com/class-diagram
 
-class Mitarbeiter {
+class Worker {
   +String id
   +String resourceCategory
   +String division
-  +String[] qualifikationen
-  +Date[] abwesenheiten
+  +String[] qualification
+  +Date[] freeDays
 }
 
 class Baustelle {
   +String id
-  +Bedarf[] bedarfe
-  +DateTime startZeit
-  +DateTime endZeit
+  +Bedarf[] demands
+  +DateTime startTime
+  +DateTime endTime
 }
 
-class Bedarf {
+class Demand {
   +String resourceCategory
-  +String[] qualifikation
-  +DateTime startZeit
-  +DateTime endZeit
+  +String[] qualifications
+  +DateTime startTime
+  +DateTime endTime
 }
 
 @enduml
