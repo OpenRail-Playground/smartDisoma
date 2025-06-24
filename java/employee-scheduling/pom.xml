@@ -39,6 +39,23 @@
   </dependencyManagement>
 
   <dependencies>
+    <!-- https://mvnrepository.com/artifact/org.instancio/instancio-core -->
+    <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-csv -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-csv</artifactId>
+      <version>1.14.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.instancio</groupId>
+      <artifactId>instancio-core</artifactId>
+      <version>5.4.1</version>
+    </dependency>
+    <dependency>
+      <groupId>net.datafaker</groupId>
+      <artifactId>datafaker</artifactId>
+      <version>2.4.3</version>
+    </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-rest</artifactId>
