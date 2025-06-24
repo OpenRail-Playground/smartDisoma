@@ -76,6 +76,10 @@ public class Resource {
         return team;
     }
 
+    public boolean isInTeam(String team) {
+        return this.team != null && this.team.equals(team);
+    }
+
     public void setTeam(String team) {
         this.team = team;
     }

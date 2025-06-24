@@ -159,4 +159,18 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
         return Duration.between(demand1.getStart(), demand2.getStart()).toDays() <= daysBetween;
     }
 
+    Constraint teamStablility(ConstraintFactory constraintFactory) {
+        return constraintFactory.forEach(Demand.class)
+                .filter(demand -> demand.getResource().getTeam() != null)
+                .groupBy(Demand::getResource, d -> d.getResource().getTeam(), ConstraintCollectors.count())
+                .filter((d,team,count) -> count > 1)
+                .reward(HardSoftScore.ONE_SOFT, 
+                   (shift, team, workerCount) -> calculateTeamBonus(workerCount))
+            .asConstraint("Reward team cohesion");
+}       
+
+    private int calculateTeamBonus(long workerCount) {
+        // Example: reward 10 points for each additional worker in the team
+        return (int) (workerCount - 1);
+    }
 }
