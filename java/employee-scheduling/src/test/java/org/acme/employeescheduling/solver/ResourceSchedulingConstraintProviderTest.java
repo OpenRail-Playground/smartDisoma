@@ -33,13 +33,13 @@ class ResourceSchedulingConstraintProviderTest {
     @Test
     void requiredSkill() {
         Resource resource = new Resource("Amy", "Category", Set.of(), null, null, null);
-        constraintVerifier.verifyThat(EmployeeSchedulingConstraintProvider::requiredSkill)
+        constraintVerifier.verifyThat(EmployeeSchedulingConstraintProvider::requiredQualifications)
                 .given(resource,
                         new Demand("1", DAY_START_TIME, DAY_END_TIME, "Location", "Skill", resource))
                 .penalizes(1);
 
         resource = new Resource("Beth", "Category", Set.of("Skill"), null, null, null);
-        constraintVerifier.verifyThat(EmployeeSchedulingConstraintProvider::requiredSkill)
+        constraintVerifier.verifyThat(EmployeeSchedulingConstraintProvider::requiredQualifications)
                 .given(resource,
                         new Demand("2", DAY_START_TIME, DAY_END_TIME, "Location", "Skill", resource))
                 .penalizes(0);
