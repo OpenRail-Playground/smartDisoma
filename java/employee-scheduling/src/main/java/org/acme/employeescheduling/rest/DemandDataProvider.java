@@ -1,0 +1,80 @@
+package org.acme.employeescheduling.rest;
+
+import org.acme.employeescheduling.domain.Demand;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+public class DemandDataProvider {
+
+    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    public static void main(String[] args) throws IOException {
+        var demands = new DemandDataProvider().readDemands();
+        System.out.println(demands.size());
+    }
+
+    public List<Demand> readDemands() {
+        File csvData = new File("java/employee-scheduling/src/main/resources/BSA_Export_Schichten_Mai-bis-August.xlsx");
+        List<Demand> demands = new LinkedList<>();
+        int currentId = 0;
+        int wrongLines = 0;
+        try {
+            Reader reader = new FileReader(csvData);
+            CSVParser parser = new CSVParser(reader, CSVFormat.newFormat(';'));
+            var records = parser.getRecords();
+            for (CSVRecord csvRecord : records) {
+                Demand demand = new Demand();
+                try {
+                    demand.setId(Integer.toString(currentId++));
+                    demand.setStart(getStartTime(csvRecord));
+                    demand.setEnd(getEndTime(csvRecord));
+                    demand.setConstructionSite(getConstructionSite(csvRecord));
+                    demand.setRequiredResourceCategory(getRequiredResourceCategory(csvRecord));
+                    demand.setRequiredQualifications(getRequiredQualifications(csvRecord));
+                    demands.add(demand);
+                }
+                catch (Exception e) {
+                    wrongLines++;
+                    // ignore all invalid input data
+                }
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println(wrongLines);
+        return demands;
+    }
+
+    private LocalDateTime getStartTime(CSVRecord record) {
+        return LocalDateTime.parse(record.get("Schichtstart"), FORMATTER);
+    }
+
+    private LocalDateTime getEndTime(CSVRecord record) {
+        return LocalDateTime.parse(record.get("Schichtende"), FORMATTER);
+    }
+
+    private String getConstructionSite(CSVRecord record) {
+        return record.get("BSA-ID");
+    }
+
+    private String getRequiredResourceCategory(CSVRecord record) {
+        return record.get("Ressourcenkategorie-Typ");
+    }
+
+    private Set<String> getRequiredQualifications(CSVRecord record)
+    {
+        return Set.of(record.get("Qualifikationen").split(","));
+    }
+}
