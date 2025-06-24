@@ -40,7 +40,7 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
                 requiredQualifications(constraintFactory),
                 noOverlappingShifts(constraintFactory),
                 atLeast10HoursBetweenTwoShifts(constraintFactory),
-                oneShiftPerDay(constraintFactory),
+                //oneShiftPerDay(constraintFactory),
                 unavailableEmployee(constraintFactory),
                 // Soft constraints
                 undesiredDayForEmployee(constraintFactory),
@@ -70,25 +70,25 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
                 .asConstraint("Overlapping shift");
     }
 
-    Constraint atLeast10HoursBetweenTwoShifts(ConstraintFactory constraintFactory) {
+    Constraint atLeast10HoursBetweenTwoShifts(ConstraintFactory constraintFactory, int minHoursBetweenShifts) {
         return constraintFactory.forEach(Demand.class)
                 .join(Demand.class, equal(Demand::getResource), lessThanOrEqual(Demand::getEnd, Demand::getStart))
                 .filter((firstShift,
-                        secondShift) -> Duration.between(firstShift.getEnd(), secondShift.getStart()).toHours() < 10)
+                        secondShift) -> Duration.between(firstShift.getEnd(), secondShift.getStart()).toHours() < minHoursBetweenShifts)
                 .penalize(HardSoftBigDecimalScore.ONE_HARD,
                         (firstShift, secondShift) -> {
                             int breakLength = (int) Duration.between(firstShift.getEnd(), secondShift.getStart()).toMinutes();
-                            return (10 * 60) - breakLength;
+                            return (minHoursBetweenShifts * 60) - breakLength;
                         })
-                .asConstraint("At least 10 hours between 2 shifts");
+                .asConstraint("At least %d hours between 2 shifts".formatted( minHoursBetweenShifts));
     }
 
-    Constraint oneShiftPerDay(ConstraintFactory constraintFactory) {
+    /*Constraint oneShiftPerDay(ConstraintFactory constraintFactory) {
         return constraintFactory.forEachUniquePair(Demand.class, equal(Demand::getResource),
                 equal(shift -> shift.getStart().toLocalDate()))
                 .penalize(HardSoftBigDecimalScore.ONE_HARD)
                 .asConstraint("Max one shift per day");
-    }
+    }*/
 
     Constraint unavailableEmployee(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Demand.class)
@@ -118,4 +118,6 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
                 .asConstraint("Balance employee shift assignments");
     }
 
+    Constraint StabilityOfConstructionSide(ConstraintFactory constraintFactory) {
+        constraintFactory.
 }
