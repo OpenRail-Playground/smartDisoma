@@ -1,9 +1,13 @@
 package org.acme.employeescheduling.solver;
 
 import static ai.timefold.solver.core.api.score.stream.Joiners.equal;
+import static ai.timefold.solver.core.api.score.stream.Joiners.filtering;
+import static ai.timefold.solver.core.api.score.stream.Joiners.lessThan;
 import static ai.timefold.solver.core.api.score.stream.Joiners.lessThanOrEqual;
 import static ai.timefold.solver.core.api.score.stream.Joiners.overlapping;
 
+import ai.timefold.solver.core.api.score.buildin.hardsoft.HardSoftScore;
+import ai.timefold.solver.core.api.score.stream.Joiners;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.function.Function;
@@ -17,6 +21,7 @@ import ai.timefold.solver.core.api.score.stream.common.LoadBalance;
 
 import org.acme.employeescheduling.domain.Demand;
 import org.acme.employeescheduling.domain.Resource;
+import org.apache.commons.math3.util.Pair;
 
 public class EmployeeSchedulingConstraintProvider implements ConstraintProvider {
 
@@ -39,12 +44,14 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
                 requiredResourceCategory(constraintFactory),
                 requiredQualifications(constraintFactory),
                 noOverlappingShifts(constraintFactory),
-                atLeast10HoursBetweenTwoShifts(constraintFactory),
-                oneShiftPerDay(constraintFactory),
+                atLeastHoursBetweenTwoShifts(constraintFactory, 12),
                 unavailableEmployee(constraintFactory),
                 // Soft constraints
                 undesiredDayForEmployee(constraintFactory),
-                balanceEmployeeShiftAssignments(constraintFactory)
+                balanceEmployeeShiftAssignments(constraintFactory),
+                constructionSiteSwitching(constraintFactory),
+                shiftChanges(constraintFactory),
+                balanceNightShifts(constraintFactory),
         };
     }
 
@@ -70,24 +77,17 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
                 .asConstraint("Overlapping shift");
     }
 
-    Constraint atLeast10HoursBetweenTwoShifts(ConstraintFactory constraintFactory) {
+    Constraint atLeastHoursBetweenTwoShifts(ConstraintFactory constraintFactory, int minHoursBetweenShifts) {
         return constraintFactory.forEach(Demand.class)
                 .join(Demand.class, equal(Demand::getResource), lessThanOrEqual(Demand::getEnd, Demand::getStart))
                 .filter((firstShift,
-                        secondShift) -> Duration.between(firstShift.getEnd(), secondShift.getStart()).toHours() < 10)
+                        secondShift) -> Duration.between(firstShift.getEnd(), secondShift.getStart()).toHours() < minHoursBetweenShifts)
                 .penalize(HardSoftBigDecimalScore.ONE_HARD,
                         (firstShift, secondShift) -> {
                             int breakLength = (int) Duration.between(firstShift.getEnd(), secondShift.getStart()).toMinutes();
-                            return (10 * 60) - breakLength;
+                            return (minHoursBetweenShifts * 60) - breakLength;
                         })
-                .asConstraint("At least 10 hours between 2 shifts");
-    }
-
-    Constraint oneShiftPerDay(ConstraintFactory constraintFactory) {
-        return constraintFactory.forEachUniquePair(Demand.class, equal(Demand::getResource),
-                equal(shift -> shift.getStart().toLocalDate()))
-                .penalize(HardSoftBigDecimalScore.ONE_HARD)
-                .asConstraint("Max one shift per day");
+                .asConstraint("At least %d hours between 2 shifts".formatted( minHoursBetweenShifts));
     }
 
     Constraint unavailableEmployee(ConstraintFactory constraintFactory) {
@@ -116,6 +116,47 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
                         (employee, shiftCount) -> shiftCount))
                 .penalizeBigDecimal(HardSoftBigDecimalScore.ONE_SOFT, LoadBalance::unfairness)
                 .asConstraint("Balance employee shift assignments");
+    }
+
+    private Constraint constructionSiteSwitching(ConstraintFactory constraintFactory) {
+        return constraintFactory
+            .forEach(Demand.class)
+            .join(Demand.class,
+                equal(Demand::getResource),
+                filtering((d1, d2) -> consecutiveDemandsWithinDays(d1, d2, 4)))  //
+            .filter((demand1, demand2) -> demand1.getConstructionSite().equals(demand2.getConstructionSite()))
+            .reward(HardSoftBigDecimalScore.ONE_SOFT) // TODO may need a reward value
+            .asConstraint("Resource switching construction site");
+    }
+
+    private Constraint shiftChanges(ConstraintFactory constraintFactory) {
+        return constraintFactory
+            .forEach(Demand.class)
+            .join(Demand.class,
+                equal(Demand::getResource),
+                filtering((d1, d2) -> consecutiveDemandsWithinDays(d1, d2, 1)))
+            .filter((demand1, demand2) -> demand1.isNightShift() != demand2.isNightShift())
+            .penalize(HardSoftScore.ONE_SOFT)
+            .asConstraint("Shift changes");
+    }
+
+    Constraint balanceNightShifts(ConstraintFactory constraintFactory) {
+        return constraintFactory.forEach(Demand.class)
+            .filter(Demand::isNightShift)
+            .groupBy(Demand::getResource, ConstraintCollectors.count())
+            .complement(Resource.class, e -> 0) // Include all employees which are not assigned to any shift.c
+            .groupBy(ConstraintCollectors.loadBalance((employee, shiftCount) -> employee,
+                (employee, shiftCount) -> shiftCount))
+            .penalizeBigDecimal(HardSoftBigDecimalScore.ONE_SOFT, LoadBalance::unfairness)
+            .asConstraint("Balance employee night shift assignments");
+    }
+
+    private boolean consecutiveDemandsWithinDays(Demand demand1, Demand demand2, int daysBetween) {
+        if (demand1.getStart().isAfter(demand2.getStart())) {
+            return false;
+        }
+
+        return Duration.between(demand1.getStart(), demand2.getStart()).toDays() <= daysBetween;
     }
 
 }

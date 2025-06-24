@@ -34,15 +34,16 @@ public class Demand {
     }
 
     public Demand(LocalDateTime start, LocalDateTime end, String constructionSite, String requiredResourceCategory, Resource resource, Set<String> requiredQualifications) {
-        this(null, start, end, constructionSite, requiredResourceCategory, resource);
+        this(null, start, end, constructionSite, requiredResourceCategory, resource, requiredQualifications);
     }
 
-    public Demand(String id, LocalDateTime start, LocalDateTime end, String constructionSite, String requiredResourceCategory, Resource resource) {
+    public Demand(String id, LocalDateTime start, LocalDateTime end, String constructionSite, String requiredResourceCategory, Resource resource, Set<String> requiredQualifications) {
         this.id = id;
         this.start = start;
         this.end = end;
         this.constructionSite = constructionSite;
         this.requiredResourceCategory = requiredResourceCategory;
+        this.requiredQualifications = requiredQualifications;
         this.resource = resource;
     }
 
@@ -139,5 +140,11 @@ public class Demand {
     @Override
     public int hashCode() {
         return getId().hashCode();
+    }
+
+    public boolean isNightShift() {
+        return getOverlappingDurationInMinutes(this.start, this.end,
+            LocalDateTime.of(this.end.toLocalDate(), LocalTime.parse("00:00:00")),
+            LocalDateTime.of(this.end.toLocalDate(), LocalTime.parse("04:00:00"))) > 0;
     }
 }
