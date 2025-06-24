@@ -72,62 +72,6 @@
         </div>
     </div>
 
-    <div id="rest" class="tab-pane fade  container-fluid">
-        <h1>REST API Guide</h1>
-
-        <h2>Resource Scheduling solver integration via cURL</h2>
-
-        <h3>1. Download demo data</h3>
-        <pre>
-            <button class="btn btn-outline-dark btn-sm float-end"
-                    onclick="copyTextToClipboard('curl1')">Copy</button>
-            <code id="curl1">curl -X GET -H 'Accept:application/json' http://localhost:8080/demo-data/SMALL -o sample.json</code>
-    </pre>
-
-        <h3>2. Post the sample data for solving</h3>
-        <p>The POST operation returns a <code>jobId</code> that should be used in subsequent commands.</p>
-        <pre>
-            <button class="btn btn-outline-dark btn-sm float-end"
-                    onclick="copyTextToClipboard('curl2')">Copy</button>
-            <code id="curl2">curl -X POST -H 'Content-Type:application/json' http://localhost:8080/schedules -d@sample.json</code>
-    </pre>
-
-        <h3>3. Get the current status and score</h3>
-        <pre>
-            <button class="btn btn-outline-dark btn-sm float-end"
-                    onclick="copyTextToClipboard('curl3')">Copy</button>
-            <code id="curl3">curl -X GET -H 'Accept:application/json' http://localhost:8080/schedules/{jobId}/status</code>
-    </pre>
-
-        <h3>4. Get the complete solution</h3>
-        <pre>
-            <button class="btn btn-outline-dark btn-sm float-end"
-                    onclick="copyTextToClipboard('curl4')">Copy</button>
-            <code id="curl4">curl -X GET -H 'Accept:application/json' http://localhost:8080/schedules/{jobId}</code>
-    </pre>
-
-        <h3>5. Fetch the analysis of the solution</h3>
-        <pre>
-            <button class="btn btn-outline-dark btn-sm float-end"
-                    onclick="copyTextToClipboard('curl5')">Copy</button>
-            <code id="curl5">curl -X PUT -H 'Content-Type:application/json' http://localhost:8080/schedules/analyze -d@solution.json</code>
-    </pre>
-
-        <h3>5. Terminate solving early</h3>
-        <pre>
-            <button class="btn btn-outline-dark btn-sm float-end"
-                    onclick="copyTextToClipboard('curl5')">Copy</button>
-            <code id="curl6">curl -X DELETE -H 'Accept:application/json' http://localhost:8080/schedules/{id}</code>
-    </pre>
-    </div>
-
-    <div id="openapi" class="tab-pane fade container-fluid">
-        <h1>REST API Reference</h1>
-        <div class="ratio ratio-1x1">
-            <!-- "scrolling" attribute is obsolete, but e.g. Chrome does not support "overflow:hidden" -->
-            <iframe src="/q/swagger-ui" style="overflow:hidden;" scrolling="no"></iframe>
-        </div>
-    </div>
 </div>
 <footer id="timefold-auto-footer"></footer>
 <div class="modal fadebd-example-modal-lg" id="scoreAnalysisModal" tabindex="-1"

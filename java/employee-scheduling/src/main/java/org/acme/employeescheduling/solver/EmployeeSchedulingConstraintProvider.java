@@ -8,6 +8,7 @@ import static ai.timefold.solver.core.api.score.stream.Joiners.overlapping;
 
 import ai.timefold.solver.core.api.score.buildin.hardsoft.HardSoftScore;
 import ai.timefold.solver.core.api.score.stream.Joiners;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.function.Function;
@@ -59,7 +60,7 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
     Constraint requiredResourceCategory(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Demand.class)
                 .filter(shift -> !shift.getResource().getResourceCategory().equals(shift.getRequiredResourceCategory()))
-                .penalize(HardSoftBigDecimalScore.ONE_HARD)
+                .penalize(HardSoftBigDecimalScore.ONE_SOFT)
                 .asConstraint("Missing required resource category");
     }
 
@@ -105,7 +106,7 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
                 .join(Resource.class, equal(Demand::getResource, Function.identity()))
                 .flattenLast(Resource::getUndesiredDates)
                 .filter(Demand::isOverlappingWithDate)
-                .penalize(HardSoftBigDecimalScore.ONE_SOFT, Demand::getOverlappingDurationInMinutes)
+                .penalize(HardSoftBigDecimalScore.ofSoft(BigDecimal.valueOf(1.0/60)), Demand::getOverlappingDurationInMinutes)
                 .asConstraint("Undesired day for employee");
     }
 

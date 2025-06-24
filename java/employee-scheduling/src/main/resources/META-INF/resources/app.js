@@ -179,16 +179,13 @@ function renderSchedule(schedule) {
     byResourceItemDataSet.clear();
     byConstructionSiteItemDataSet.clear();
 
-    console.log(schedule);
-
-    schedule.resources.sort((a,b) => a.team.localeCompare(b.team)).forEach((resources, index) => {
+    schedule.resources.sort((a, b) => a.team.localeCompare(b.team)).forEach((resources, index) => {
         const resourceGroupElement = $('<div class="card-body p-2"/>')
             .append($(`<h5 class="card-title mb-2"/>)`)
                 .append(resources.name))
             .append($('<div/>')
-                .append($(`<span class="badge me-1 mt-1" style="background-color:#efdc7d">${resources.team}</span>`))
-                .append($(`<span class="badge me-1 mt-1" style="background-color:#bbf193">${resources.resourceCategory}</span></br>`))
-                .append($(resources.qualifications.slice(0, 5).map(skill => `<span class="badge me-1 mt-1" style="background-color:#d3d7cf">${skill}</span>`).join(''))));
+                .append($(`<span class="badge me-1 mt-1" style="background-color:${calculateColorForString(resources.team)}">${resources.team}</span>`))
+                .append($(`<span class="badge me-1 mt-1" style="background-color:#bbf193">${resources.resourceCategory}</span>`)));
         byResourceGroupDataSet.add({id: resources.name, content: resourceGroupElement.html()});
 
         resources.unavailableDates.forEach((rawDate, dateIndex) => {
@@ -256,6 +253,7 @@ function renderSchedule(schedule) {
                 .append($(`<h5 class="card-title mb-2"/>)`)
                     .append(demand.resource.name))
                 .append($('<div/>')
+                    .append($(`<span class="badge me-1 mt-1" style="background-color:${calculateColorForString(demand.resource.team)}">${demand.resource.team}</span>`))
                     .append($(`<span class="badge me-1 mt-1" style="background-color:${skillColor}">${demand.requiredQualifications}</span>`)));
 
             const demandColor = getDemandColor(demand, demand.resource);
@@ -413,6 +411,19 @@ function refreshSolvingButtons(solving) {
     }
 }
 
+function calculateColorForString(str) {
+    let hash = 0;
+    for (let i = str.length - 1; i >= 0; i--) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    var color = (hash & 0x00FFFFFF)
+        .toString(16)
+        .toUpperCase();
+
+    return "00000".substring(0, 6 - color.length) + color;
+}
+
 function stopSolving() {
     $.delete(`/schedules/${scheduleId}`, function () {
         refreshSolvingButtons(false);
@@ -429,33 +440,13 @@ function replaceQuickstartTimefoldAutoHeaderFooter() {
         timefoldHeader.append(
             $(`<div class="container-fluid">
         <nav class="navbar sticky-top navbar-expand-lg navbar-dark shadow mb-3">
-          <a class="navbar-brand" href="https://timefold.ai">
-            <img src="/webjars/timefold/img/timefold-logo-horizontal-negative.svg" alt="Timefold logo" width="200">
+          <a class="navbar-brand">
+            <img src="smart_disoma.png" alt="Timefold logo" width="200">
           </a>
+          <h1 style="color: white;">Smart Disoma</h1>
           <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
           </button>
-          <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="nav nav-pills">
-              <li class="nav-item active" id="navUIItem">
-                <button class="nav-link active" id="navUI" data-bs-toggle="pill" data-bs-target="#demo" type="button">Demo UI</button>
-              </li>
-              <li class="nav-item" id="navRestItem">
-                <button class="nav-link" id="navRest" data-bs-toggle="pill" data-bs-target="#rest" type="button">Guide</button>
-              </li>
-              <li class="nav-item" id="navOpenApiItem">
-                <button class="nav-link" id="navOpenApi" data-bs-toggle="pill" data-bs-target="#openapi" type="button">REST API</button>
-              </li>
-            </ul>
-          </div>
-          <div class="ms-auto">
-              <div class="dropdown">
-                  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                      Data
-                  </button>
-                  <div id="testDataButton" class="dropdown-menu" aria-labelledby="dropdownMenuButton"></div>
-              </div>
-          </div>
         </nav>
       </div>`));
     }
