@@ -5,16 +5,13 @@ import static org.instancio.Select.field;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import net.datafaker.Faker;
+import org.acme.employeescheduling.domain.Demand;
 import org.acme.employeescheduling.domain.Resource;
 import org.acme.employeescheduling.domain.Schedule;
 import org.instancio.Instancio;
@@ -88,7 +85,7 @@ public class DemoDataGenerator {
         schedule.setDemands(DemandDataProvider.readDemands().subList(0, 1000));
 
         schedule.setResources(generateResources());
-        calculateRandomAvailability(DemoData.SMALL.getParameters(), schedule.getResources());
+        setRandomUnavailabilities(DemoData.SMALL.getParameters(), schedule);
         return schedule;
     }
 
@@ -116,42 +113,24 @@ public class DemoDataGenerator {
         return possibleValues.get(new Random().nextInt(possibleValues.size()));
     }
 
-    private void calculateRandomAvailability(DemoDataParameters parameters, List<Resource> resources) {
-
-        LocalDate startDate = LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY));
-
+    private void setRandomUnavailabilities(DemoDataParameters parameters, Schedule schedule) {
+        LocalDateTime earliestStart = schedule.getDemands().stream().map(Demand::getStart).min(Comparator.naturalOrder()).orElse(null);
+        LocalDate startDay = earliestStart.toLocalDate();
+        LocalDateTime latestEnd = schedule.getDemands().stream().map(Demand::getEnd).max(Comparator.naturalOrder()).orElse(null);
+        int daysInHorizon = latestEnd.getDayOfYear() - earliestStart.getDayOfYear();
+        int averageUnavailableDays = (int) (daysInHorizon * 0.133);
         Random random = new Random(parameters.randomSeed);
-        for (int i = 0; i < parameters.daysInSchedule; i++) {
-            Set<Resource> resourceWithAvailabilitiesOnDay = pickSubset(resources, random,
-                    AVAILABILITY_COUNT_DISTRIBUTION);
-            LocalDate date = startDate.plusDays(i);
-            for (Resource resource : resourceWithAvailabilitiesOnDay) {
-                switch (random.nextInt(3)) {
-                    case 0 -> resource.getUnavailableDates().add(date);
-                    case 1 -> resource.getUndesiredDates().add(date);
-                }
-            }
-        }
-    }
-
-    private int pickCount(Random random, List<CountDistribution> countDistribution) {
-        double probabilitySum = 0;
-        for (var possibility : countDistribution) {
-            probabilitySum += possibility.weight;
-        }
-        var choice = random.nextDouble(probabilitySum);
-        int numOfItems = 0;
-        while (choice >= countDistribution.get(numOfItems).weight) {
-            choice -= countDistribution.get(numOfItems).weight;
-            numOfItems++;
-        }
-        return countDistribution.get(numOfItems).count;
-    }
-
-    private <T> Set<T> pickSubset(List<T> sourceSet, Random random, List<CountDistribution> countDistribution) {
-        var count = pickCount(random, countDistribution);
-        List<T> items = new ArrayList<>(sourceSet);
-        Collections.shuffle(items, random);
-        return new HashSet<>(items.subList(0, count));
+        schedule.getResources().forEach(resource -> {
+            Set<LocalDate> unavailableDates = IntStream.range(0, averageUnavailableDays)
+                    .mapToObj(index ->
+                            startDay.plusDays(random.nextInt(daysInHorizon))
+                    ).collect(Collectors.toSet());
+            resource.getUnavailableDates().addAll(unavailableDates);
+            Set<LocalDate> undesiredDates = IntStream.range(0, averageUnavailableDays)
+                    .mapToObj(index ->
+                            startDay.plusDays(random.nextInt(daysInHorizon))
+                    ).collect(Collectors.toSet());
+            resource.getUndesiredDates().addAll(undesiredDates);
+        });
     }
 }
