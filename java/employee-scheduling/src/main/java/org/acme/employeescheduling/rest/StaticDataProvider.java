@@ -1,4 +1,4 @@
-﻿package org.acme.employeescheduling.rest;
+package org.acme.employeescheduling.rest;
 
 import java.util.Collection;
 import java.util.List;
