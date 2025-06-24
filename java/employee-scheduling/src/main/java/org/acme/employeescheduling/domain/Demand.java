@@ -3,6 +3,7 @@ package org.acme.employeescheduling.domain;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
@@ -20,6 +21,7 @@ public class Demand {
     private LocalDateTime end;
 
     private String constructionSite;
+    private String shiftId; 
     private String requiredResourceCategory;
     private Set<String> requiredQualifications;
 
@@ -45,6 +47,7 @@ public class Demand {
         this.requiredResourceCategory = requiredResourceCategory;
         this.requiredQualifications = requiredQualifications;
         this.resource = resource;
+        this.shiftId = constructionSite + "-" + start.toEpochSecond(ZoneOffset.UTC);
     }
 
     public String getId() {
@@ -73,6 +76,10 @@ public class Demand {
 
     public String getConstructionSite() {
         return constructionSite;
+    }
+
+    public String getShiftId() {
+        return shiftId;
     }
 
     public void setConstructionSite(String constructionSite) {

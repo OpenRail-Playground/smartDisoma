@@ -52,6 +52,7 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
                 constructionSiteSwitching(constraintFactory),
                 shiftChanges(constraintFactory),
                 balanceNightShifts(constraintFactory),
+                teamStability(constraintFactory)
         };
     }
 
@@ -159,15 +160,17 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
         return Duration.between(demand1.getStart(), demand2.getStart()).toDays() <= daysBetween;
     }
 
-    Constraint teamStablility(ConstraintFactory constraintFactory) {
+    private Constraint teamStability(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Demand.class)
-                .filter(demand -> demand.getResource().getTeam() != null)
-                .groupBy(Demand::getResource, d -> d.getResource().getTeam(), ConstraintCollectors.count())
-                .filter((d,team,count) -> count > 1)
+                .filter(demand -> demand.getResource() != null)
+                .groupBy(Demand::getShiftId,           // Group by shift/site
+                        demand -> demand.getResource().getTeam(), // Group by team
+                        ConstraintCollectors.count())             // Count team members
+                .filter((shiftId, team, count) -> count > 1)        // More than 1 team member
                 .reward(HardSoftScore.ONE_SOFT, 
-                   (shift, team, workerCount) -> calculateTeamBonus(workerCount))
-            .asConstraint("Reward team cohesion");
-}       
+                        (site, team, count) -> calculateTeamBonus(count))
+                .asConstraint("Reward team cohesion");
+        }       
 
     private int calculateTeamBonus(long workerCount) {
         // Example: reward 10 points for each additional worker in the team
