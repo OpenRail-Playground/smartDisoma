@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import net.datafaker.Faker;
@@ -100,7 +101,7 @@ public class DemoDataGenerator {
     private Resource generateResource() {
         Faker faker = new Faker();
         return Instancio.of(Resource.class)
-            .supply(field(Resource::getName), res -> faker.unique().fetchFromYaml("funny_name.name"))
+            .supply(field(Resource::getName), res -> UUID.randomUUID().toString())
             .supply(field(Resource::getResourceCategory), res -> getRandomValueFrom(StaticDataProvider.getResourceCategories()))
             .supply(field(Resource::getQualifications), res -> randomQualifications())
             .create();
@@ -126,7 +127,7 @@ public class DemoDataGenerator {
         Random random = new Random(parameters.randomSeed);
         for (int i = 0; i < parameters.daysInSchedule; i++) {
             Set<Resource> resourceWithAvailabilitiesOnDay = pickSubset(resources, random,
-                    AVAILABILITY_COUNT_DISTRIBUTION);
+                AVAILABILITY_COUNT_DISTRIBUTION_LARGE);
             LocalDate date = startDate.plusDays(i);
             for (Resource resource : resourceWithAvailabilitiesOnDay) {
                 switch (random.nextInt(3)) {

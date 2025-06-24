@@ -1,5 +1,6 @@
 package org.acme.employeescheduling.rest;
 
+import java.net.URL;
 import org.acme.employeescheduling.domain.Demand;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -21,12 +22,13 @@ public class DemandDataProvider {
 
 
     public static List<Demand> readDemands() {
-        File csvData = new File("java/employee-scheduling/src/main/resources/BSA_Export_Schichten_Mai-bis-August.csv");
+        URL url = DemandDataProvider.class.getResource("/BSA_Export_Schichten_Mai-bis-August.csv");
+//        File csvData = new File("java/employee-scheduling/src/main/resources/BSA_Export_Schichten_Mai-bis-August.csv");
         List<Demand> demands = new LinkedList<>();
         int currentId = 0;
         int wrongLines = 0;
         try {
-            Reader reader = new FileReader(csvData);
+            Reader reader = new FileReader(url.getFile());
             CSVParser parser = new CSVParser(reader, CSVFormat.newFormat(';').withFirstRecordAsHeader());
             var records = parser.getRecords();
             for (CSVRecord csvRecord : records) {

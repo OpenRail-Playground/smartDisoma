@@ -179,12 +179,16 @@ function renderSchedule(schedule) {
     byResourceItemDataSet.clear();
     byConstructionSiteItemDataSet.clear();
 
-    schedule.resources.forEach((resources, index) => {
+    console.log(schedule);
+
+    schedule.resources.sort((a,b) => a.team.localeCompare(b.team)).forEach((resources, index) => {
         const resourceGroupElement = $('<div class="card-body p-2"/>')
             .append($(`<h5 class="card-title mb-2"/>)`)
                 .append(resources.name))
             .append($('<div/>')
-                .append($(resources.qualifications.map(skill => `<span class="badge me-1 mt-1" style="background-color:#d3d7cf">${skill}</span>`).join(''))));
+                .append($(`<span class="badge me-1 mt-1" style="background-color:#efdc7d">${resources.team}</span>`))
+                .append($(`<span class="badge me-1 mt-1" style="background-color:#bbf193">${resources.resourceCategory}</span></br>`))
+                .append($(resources.qualifications.slice(0, 5).map(skill => `<span class="badge me-1 mt-1" style="background-color:#d3d7cf">${skill}</span>`).join(''))));
         byResourceGroupDataSet.add({id: resources.name, content: resourceGroupElement.html()});
 
         resources.unavailableDates.forEach((rawDate, dateIndex) => {
@@ -218,8 +222,8 @@ function renderSchedule(schedule) {
     });
 
     schedule.demands.forEach((demand, index) => {
-        if (groups.indexOf(demand.location) === -1) {
-            groups.push(demand.location);
+        if (groups.indexOf(demand.constructionSite) === -1) {
+            groups.push(demand.constructionSite);
             byConstructionSiteGroupDataSet.add({
                 id: demand.constructionSite,
                 content: demand.constructionSite,
@@ -242,7 +246,7 @@ function renderSchedule(schedule) {
                 style: "background-color: #EF292999"
             });
         } else {
-            const skillColor = (demand.resource.skills.indexOf(demand.requiredQualifications) === -1 ? '#ef2929' : '#8ae234');
+            const skillColor = (demand.requiredQualifications.every(q => demand.resource.qualifications.includes(q)) === -1 ? '#ef2929' : '#8ae234');
             const byResourceDemandElement = $('<div class="card-body p-2"/>')
                 .append($(`<h5 class="card-title mb-2"/>)`)
                     .append(demand.constructionSite))
