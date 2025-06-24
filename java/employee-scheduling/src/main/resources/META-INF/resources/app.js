@@ -10,8 +10,8 @@ let demoDataId = null;
 let scheduleId = null;
 let loadedSchedule = null;
 
-const byEmployeePanel = document.getElementById("byEmployeePanel");
-const byEmployeeTimelineOptions = {
+const byResourcePanel = document.getElementById("byResourcePanel");
+const byResourceTimelineOptions = {
     timeAxis: {scale: "hour", step: 6},
     orientation: {axis: "top"},
     stack: false,
@@ -19,21 +19,21 @@ const byEmployeeTimelineOptions = {
     zoomMin: zoomMin,
     zoomMax: zoomMax,
 };
-let byEmployeeGroupDataSet = new vis.DataSet();
-let byEmployeeItemDataSet = new vis.DataSet();
-let byEmployeeTimeline = new vis.Timeline(byEmployeePanel, byEmployeeItemDataSet, byEmployeeGroupDataSet, byEmployeeTimelineOptions);
+let byResourceGroupDataSet = new vis.DataSet();
+let byResourceItemDataSet = new vis.DataSet();
+let byResourceTimeline = new vis.Timeline(byResourcePanel, byResourceItemDataSet, byResourceGroupDataSet, byResourceTimelineOptions);
 
-const byLocationPanel = document.getElementById("byLocationPanel");
-const byLocationTimelineOptions = {
+const byConstructionSitePanel = document.getElementById("byConstructionSitePanel");
+const byConstructionSiteTimelineOptions = {
     timeAxis: {scale: "hour", step: 6},
     orientation: {axis: "top"},
     xss: {disabled: true}, // Items are XSS safe through JQuery
     zoomMin: zoomMin,
     zoomMax: zoomMax,
 };
-let byLocationGroupDataSet = new vis.DataSet();
-let byLocationItemDataSet = new vis.DataSet();
-let byLocationTimeline = new vis.Timeline(byLocationPanel, byLocationItemDataSet, byLocationGroupDataSet, byLocationTimelineOptions);
+let byConstructionSiteGroupDataSet = new vis.DataSet();
+let byConstructionSiteItemDataSet = new vis.DataSet();
+let byConstructionSiteTimeline = new vis.Timeline(byConstructionSitePanel, byConstructionSiteItemDataSet, byConstructionSiteGroupDataSet, byConstructionSiteTimelineOptions);
 
 let windowStart = JSJoda.LocalDate.now().toString();
 let windowEnd = JSJoda.LocalDate.parse(windowStart).plusDays(7).toString();
@@ -51,11 +51,11 @@ $(document).ready(function () {
         analyze();
     });
     // HACK to allow vis-timeline to work within Bootstrap tabs
-    $("#byEmployeeTab").on('shown.bs.tab', function (event) {
-        byEmployeeTimeline.redraw();
+    $("#byResourceTab").on('shown.bs.tab', function (event) {
+        byResourceTimeline.redraw();
     })
-    $("#byLocationTab").on('shown.bs.tab', function (event) {
-        byLocationTimeline.redraw();
+    $("#byConstructionSiteTab").on('shown.bs.tab', function (event) {
+        byConstructionSiteTimeline.redraw();
     })
 
     setupAjax();
@@ -132,11 +132,6 @@ function getShiftColor(shift, employee) {
         (shiftEnd.isAfter(shiftStart.toLocalDate().plusDays(1).atStartOfDay()) &&
             employee.undesiredDates.includes(shiftEndDateString))) {
         return UNDESIRED_COLOR
-    } else if (employee.desiredDates.includes(shiftStartDateString) ||
-        // The contains() check is ignored for a shift end at midnight (00:00:00).
-        (shiftEnd.isAfter(shiftStart.toLocalDate().plusDays(1).atStartOfDay()) &&
-            employee.desiredDates.includes(shiftEndDateString))) {
-        return DESIRED_COLOR
     } else {
         return " #729fcf"; // Tango Sky Blue
     }
@@ -166,138 +161,123 @@ function renderSchedule(schedule) {
     refreshSolvingButtons(schedule.solverStatus != null && schedule.solverStatus !== "NOT_SOLVING");
     $("#score").text("Score: " + (schedule.score == null ? "?" : schedule.score));
 
-    const unassignedShifts = $("#unassignedShifts");
+    const unassignedDemands = $("#unassignedDemands");
     const groups = [];
 
     // Show only first 7 days of draft
-    const scheduleStart = schedule.shifts.map(shift => JSJoda.LocalDateTime.parse(shift.start).toLocalDate()).sort()[0].toString();
+    const scheduleStart = schedule.demands.map(shift => JSJoda.LocalDateTime.parse(shift.start).toLocalDate()).sort()[0].toString();
     const scheduleEnd = JSJoda.LocalDate.parse(scheduleStart).plusDays(7).toString();
 
     windowStart = scheduleStart;
     windowEnd = scheduleEnd;
 
-    unassignedShifts.children().remove();
-    let unassignedShiftsCount = 0;
-    byEmployeeGroupDataSet.clear();
-    byLocationGroupDataSet.clear();
+    unassignedDemands.children().remove();
+    let unassignedDemandsCount = 0;
+    byResourceGroupDataSet.clear();
+    byConstructionSiteGroupDataSet.clear();
 
-    byEmployeeItemDataSet.clear();
-    byLocationItemDataSet.clear();
+    byResourceItemDataSet.clear();
+    byConstructionSiteItemDataSet.clear();
 
-
-    schedule.employees.forEach((employee, index) => {
+    schedule.resources.forEach((resources, index) => {
         const employeeGroupElement = $('<div class="card-body p-2"/>')
             .append($(`<h5 class="card-title mb-2"/>)`)
-                .append(employee.name))
+                .append(resources.name))
             .append($('<div/>')
-                .append($(employee.skills.map(skill => `<span class="badge me-1 mt-1" style="background-color:#d3d7cf">${skill}</span>`).join(''))));
-        byEmployeeGroupDataSet.add({id: employee.name, content: employeeGroupElement.html()});
+                .append($(resources.qualifications.map(skill => `<span class="badge me-1 mt-1" style="background-color:#d3d7cf">${skill}</span>`).join(''))));
+        byResourceGroupDataSet.add({id: resources.name, content: employeeGroupElement.html()});
 
-        employee.unavailableDates.forEach((rawDate, dateIndex) => {
+        resources.unavailableDates.forEach((rawDate, dateIndex) => {
             const date = JSJoda.LocalDate.parse(rawDate)
             const start = date.atStartOfDay().toString();
             const end = date.plusDays(1).atStartOfDay().toString();
-            const byEmployeeShiftElement = $(`<div/>`)
+            const byResourceShiftElement = $(`<div/>`)
                 .append($(`<h5 class="card-title mb-1"/>`).text("Unavailable"));
-            byEmployeeItemDataSet.add({
-                id: "employee-" + index + "-unavailability-" + dateIndex, group: employee.name,
-                content: byEmployeeShiftElement.html(),
+            byResourceItemDataSet.add({
+                id: "employee-" + index + "-unavailability-" + dateIndex, group: resources.name,
+                content: byResourceShiftElement.html(),
                 start: start, end: end,
                 type: "background",
                 style: "opacity: 0.5; background-color: " + UNAVAILABLE_COLOR,
             });
         });
-        employee.undesiredDates.forEach((rawDate, dateIndex) => {
+        resources.undesiredDates.forEach((rawDate, dateIndex) => {
             const date = JSJoda.LocalDate.parse(rawDate)
             const start = date.atStartOfDay().toString();
             const end = date.plusDays(1).atStartOfDay().toString();
-            const byEmployeeShiftElement = $(`<div/>`)
+            const byResourceShiftElement = $(`<div/>`)
                 .append($(`<h5 class="card-title mb-1"/>`).text("Undesired"));
-            byEmployeeItemDataSet.add({
-                id: "employee-" + index + "-undesired-" + dateIndex, group: employee.name,
-                content: byEmployeeShiftElement.html(),
+            byResourceItemDataSet.add({
+                id: "employee-" + index + "-undesired-" + dateIndex, group: resources.name,
+                content: byResourceShiftElement.html(),
                 start: start, end: end,
                 type: "background",
                 style: "opacity: 0.5; background-color: " + UNDESIRED_COLOR,
             });
         });
-        employee.desiredDates.forEach((rawDate, dateIndex) => {
-            const date = JSJoda.LocalDate.parse(rawDate)
-            const start = date.atStartOfDay().toString();
-            const end = date.plusDays(1).atStartOfDay().toString();
-            const byEmployeeShiftElement = $(`<div/>`)
-                .append($(`<h5 class="card-title mb-1"/>`).text("Desired"));
-            byEmployeeItemDataSet.add({
-                id: "employee-" + index + "-desired-" + dateIndex, group: employee.name,
-                content: byEmployeeShiftElement.html(),
-                start: start, end: end,
-                type: "background",
-                style: "opacity: 0.5; background-color: " + DESIRED_COLOR,
-            });
-        });
     });
 
-    schedule.shifts.forEach((shift, index) => {
-        if (groups.indexOf(shift.location) === -1) {
-            groups.push(shift.location);
-            byLocationGroupDataSet.add({
-                id: shift.location,
-                content: shift.location,
+    schedule.demands.forEach((demand, index) => {
+        if (groups.indexOf(demand.location) === -1) {
+            groups.push(demand.location);
+            byConstructionSiteGroupDataSet.add({
+                id: demand.constructionSite,
+                content: demand.constructionSite,
             });
         }
 
-        if (shift.employee == null) {
-            unassignedShiftsCount++;
+        if (demand.resource == null) {
+            unassignedDemandsCount++;
 
-            const byLocationShiftElement = $('<div class="card-body p-2"/>')
+            const byConstructionSiteShiftElement = $('<div class="card-body p-2"/>')
                 .append($(`<h5 class="card-title mb-2"/>)`)
                     .append("Unassigned"))
                 .append($('<div/>')
-                    .append($(`<span class="badge me-1 mt-1" style="background-color:#d3d7cf">${shift.requiredSkill}</span>`)));
+                    .append($(`<span class="badge me-1 mt-1" style="background-color:#d3d7cf">${demand.requiredQualifications}</span>`)));
 
-            byLocationItemDataSet.add({
-                id: 'shift-' + index, group: shift.location,
-                content: byLocationShiftElement.html(),
-                start: shift.start, end: shift.end,
+            byConstructionSiteItemDataSet.add({
+                id: 'shift-' + index, group: demand.constructionSite,
+                content: byConstructionSiteShiftElement.html(),
+                start: demand.start, end: demand.end,
                 style: "background-color: #EF292999"
             });
         } else {
-            const skillColor = (shift.employee.skills.indexOf(shift.requiredSkill) === -1 ? '#ef2929' : '#8ae234');
-            const byEmployeeShiftElement = $('<div class="card-body p-2"/>')
+            const skillColor = (demand.resource.skills.indexOf(demand.requiredQualifications) === -1 ? '#ef2929' : '#8ae234');
+            const byResourceShiftElement = $('<div class="card-body p-2"/>')
                 .append($(`<h5 class="card-title mb-2"/>)`)
-                    .append(shift.location))
+                    .append(demand.constructionSite))
                 .append($('<div/>')
-                    .append($(`<span class="badge me-1 mt-1" style="background-color:${skillColor}">${shift.requiredSkill}</span>`)));
-            const byLocationShiftElement = $('<div class="card-body p-2"/>')
+                    .append($(`<span class="badge me-1 mt-1" style="background-color:${skillColor}">${demand.requiredQualifications}</span>`)));
+            const byConstructionSiteShiftElement = $('<div class="card-body p-2"/>')
                 .append($(`<h5 class="card-title mb-2"/>)`)
-                    .append(shift.employee.name))
+                    .append(demand.resource.name))
                 .append($('<div/>')
-                    .append($(`<span class="badge me-1 mt-1" style="background-color:${skillColor}">${shift.requiredSkill}</span>`)));
+                    .append($(`<span class="badge me-1 mt-1" style="background-color:${skillColor}">${demand.requiredQualifications}</span>`)));
 
-            const shiftColor = getShiftColor(shift, shift.employee);
-            byEmployeeItemDataSet.add({
-                id: 'shift-' + index, group: shift.employee.name,
-                content: byEmployeeShiftElement.html(),
-                start: shift.start, end: shift.end,
+            const shiftColor = getShiftColor(demand, demand.resource);
+            byResourceItemDataSet.add({
+                id: 'shift-' + index, group: demand.resource.name,
+                content: byResourceShiftElement.html(),
+                start: demand.start, end: demand.end,
                 style: "background-color: " + shiftColor
             });
-            byLocationItemDataSet.add({
-                id: 'shift-' + index, group: shift.location,
-                content: byLocationShiftElement.html(),
-                start: shift.start, end: shift.end,
+            byConstructionSiteItemDataSet.add({
+                id: 'shift-' + index, group: demand.constructionSite,
+                content: byConstructionSiteShiftElement.html(),
+                start: demand.start, end: demand.end,
                 style: "background-color: " + shiftColor
             });
         }
     });
 
 
-    if (unassignedShiftsCount === 0) {
-        unassignedShifts.append($(`<p/>`).text(`There are no unassigned shifts.`));
+    if (unassignedDemandsCount === 0) {
+        unassignedDemands.append($(`<p/>`).text(`There are no unassigned demands.`));
     } else {
-        unassignedShifts.append($(`<p/>`).text(`There are ${unassignedShiftsCount} unassigned shifts.`));
+        unassignedDemands.append($(`<p/>`).text(`There are ${unassignedDemandsCount} unassigned demands.`));
     }
-    byEmployeeTimeline.setWindow(scheduleStart, scheduleEnd);
-    byLocationTimeline.setWindow(scheduleStart, scheduleEnd);
+    byResourceTimeline.setWindow(scheduleStart, scheduleEnd);
+    byConstructionSiteTimeline.setWindow(scheduleStart, scheduleEnd);
 }
 
 function solve() {

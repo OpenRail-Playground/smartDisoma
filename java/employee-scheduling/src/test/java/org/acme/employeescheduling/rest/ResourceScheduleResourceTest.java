@@ -53,10 +53,10 @@ class ResourceScheduleResourceTest {
 
         Schedule solution = get("/schedules/" + jobId).then().extract().as(Schedule.class);
         assertEquals(SolverStatus.NOT_SOLVING, solution.getSolverStatus());
-        assertNotNull(solution.getEmployees());
-        assertNotNull(solution.getShifts());
-        assertFalse(solution.getShifts().isEmpty());
-        for (Demand demand : solution.getShifts()) {
+        assertNotNull(solution.getResources());
+        assertNotNull(solution.getDemands());
+        assertFalse(solution.getDemands().isEmpty());
+        for (Demand demand : solution.getDemands()) {
             assertNotNull(demand.getEmployee());
         }
         assertTrue(solution.getScore().isFeasible());
