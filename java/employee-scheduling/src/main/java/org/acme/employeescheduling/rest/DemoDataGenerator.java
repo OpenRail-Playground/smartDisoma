@@ -118,7 +118,7 @@ public class DemoDataGenerator {
         LocalDate startDay = earliestStart.toLocalDate();
         LocalDateTime latestEnd = schedule.getDemands().stream().map(Demand::getEnd).max(Comparator.naturalOrder()).orElse(null);
         int daysInHorizon = latestEnd.getDayOfYear() - earliestStart.getDayOfYear();
-        int averageUnavailableDays = (int) (daysInHorizon / 0.133);
+        int averageUnavailableDays = (int) (daysInHorizon * 0.133);
         Random random = new Random(parameters.randomSeed);
         schedule.getResources().forEach(resource -> {
             Set<LocalDate> unavailableDates = IntStream.range(0, averageUnavailableDays)
