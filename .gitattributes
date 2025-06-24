@@ -38,3 +38,6 @@
 *.odp binary
 *.zip binary
 *.jar binary
+
+
+.vscode/
