@@ -1,5 +1,7 @@
 package org.acme.employeescheduling.rest;
 
+import static org.instancio.Select.field;
+
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -20,9 +22,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
+import net.datafaker.Faker;
 import org.acme.employeescheduling.domain.Demand;
 import org.acme.employeescheduling.domain.Resource;
 import org.acme.employeescheduling.domain.Schedule;
+import org.instancio.Instancio;
+import org.instancio.generator.Generator;
 
 @ApplicationScoped
 public class DemoDataGenerator {
@@ -119,7 +124,18 @@ public class DemoDataGenerator {
         return generateDemoData(demoData.getParameters());
     }
 
-    public Schedule generateDemoData(DemoDataParameters parameters) {
+    public Schedule generateFakeData(DemoData demoData) {
+        Instancio.create()
+    }
+
+    private Resource generateResource() {
+
+        return Instancio.of(Resource.class)
+            .supply(field(Resource::getName), res -> new Faker().funnyName().name())
+            .create();
+    }
+
+    private Schedule generateDemoData(DemoDataParameters parameters) {
         Schedule schedule = new Schedule();
 
         LocalDate startDate = LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY));
