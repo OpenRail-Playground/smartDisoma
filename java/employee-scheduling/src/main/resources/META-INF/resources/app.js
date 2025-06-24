@@ -117,20 +117,20 @@ function switchDataDropDownItemActive(newItem) {
     $("#" + newItem + "TestData").addClass(activeCssClass);
 }
 
-function getShiftColor(shift, employee) {
-    const shiftStart = JSJoda.LocalDateTime.parse(shift.start);
-    const shiftStartDateString = shiftStart.toLocalDate().toString();
-    const shiftEnd = JSJoda.LocalDateTime.parse(shift.end);
-    const shiftEndDateString = shiftEnd.toLocalDate().toString();
-    if (employee.unavailableDates.includes(shiftStartDateString) ||
-        // The contains() check is ignored for a shift end at midnight (00:00:00).
-        (shiftEnd.isAfter(shiftStart.toLocalDate().plusDays(1).atStartOfDay()) &&
-            employee.unavailableDates.includes(shiftEndDateString))) {
+function getDemandColor(demand, resource) {
+    const demandStart = JSJoda.LocalDateTime.parse(demand.start);
+    const demandStartDateString = demandStart.toLocalDate().toString();
+    const demandEnd = JSJoda.LocalDateTime.parse(demand.end);
+    const demandEndDateString = demandEnd.toLocalDate().toString();
+    if (resource.unavailableDates.includes(demandStartDateString) ||
+        // The contains() check is ignored for a demand end at midnight (00:00:00).
+        (demandEnd.isAfter(demandStart.toLocalDate().plusDays(1).atStartOfDay()) &&
+            resource.unavailableDates.includes(demandEndDateString))) {
         return UNAVAILABLE_COLOR
-    } else if (employee.undesiredDates.includes(shiftStartDateString) ||
-        // The contains() check is ignored for a shift end at midnight (00:00:00).
-        (shiftEnd.isAfter(shiftStart.toLocalDate().plusDays(1).atStartOfDay()) &&
-            employee.undesiredDates.includes(shiftEndDateString))) {
+    } else if (resource.undesiredDates.includes(demandStartDateString) ||
+        // The contains() check is ignored for a demand end at midnight (00:00:00).
+        (demandEnd.isAfter(demandStart.toLocalDate().plusDays(1).atStartOfDay()) &&
+            resource.undesiredDates.includes(demandEndDateString))) {
         return UNDESIRED_COLOR
     } else {
         return " #729fcf"; // Tango Sky Blue
@@ -165,7 +165,7 @@ function renderSchedule(schedule) {
     const groups = [];
 
     // Show only first 7 days of draft
-    const scheduleStart = schedule.demands.map(shift => JSJoda.LocalDateTime.parse(shift.start).toLocalDate()).sort()[0].toString();
+    const scheduleStart = schedule.demands.map(demand => JSJoda.LocalDateTime.parse(demand.start).toLocalDate()).sort()[0].toString();
     const scheduleEnd = JSJoda.LocalDate.parse(scheduleStart).plusDays(7).toString();
 
     windowStart = scheduleStart;
@@ -180,22 +180,22 @@ function renderSchedule(schedule) {
     byConstructionSiteItemDataSet.clear();
 
     schedule.resources.forEach((resources, index) => {
-        const employeeGroupElement = $('<div class="card-body p-2"/>')
+        const resourceGroupElement = $('<div class="card-body p-2"/>')
             .append($(`<h5 class="card-title mb-2"/>)`)
                 .append(resources.name))
             .append($('<div/>')
                 .append($(resources.qualifications.map(skill => `<span class="badge me-1 mt-1" style="background-color:#d3d7cf">${skill}</span>`).join(''))));
-        byResourceGroupDataSet.add({id: resources.name, content: employeeGroupElement.html()});
+        byResourceGroupDataSet.add({id: resources.name, content: resourceGroupElement.html()});
 
         resources.unavailableDates.forEach((rawDate, dateIndex) => {
             const date = JSJoda.LocalDate.parse(rawDate)
             const start = date.atStartOfDay().toString();
             const end = date.plusDays(1).atStartOfDay().toString();
-            const byResourceShiftElement = $(`<div/>`)
+            const byResourceDemandElement = $(`<div/>`)
                 .append($(`<h5 class="card-title mb-1"/>`).text("Unavailable"));
             byResourceItemDataSet.add({
-                id: "employee-" + index + "-unavailability-" + dateIndex, group: resources.name,
-                content: byResourceShiftElement.html(),
+                id: "resource-" + index + "-unavailability-" + dateIndex, group: resources.name,
+                content: byResourceDemandElement.html(),
                 start: start, end: end,
                 type: "background",
                 style: "opacity: 0.5; background-color: " + UNAVAILABLE_COLOR,
@@ -205,11 +205,11 @@ function renderSchedule(schedule) {
             const date = JSJoda.LocalDate.parse(rawDate)
             const start = date.atStartOfDay().toString();
             const end = date.plusDays(1).atStartOfDay().toString();
-            const byResourceShiftElement = $(`<div/>`)
+            const byResourceDemandElement = $(`<div/>`)
                 .append($(`<h5 class="card-title mb-1"/>`).text("Undesired"));
             byResourceItemDataSet.add({
-                id: "employee-" + index + "-undesired-" + dateIndex, group: resources.name,
-                content: byResourceShiftElement.html(),
+                id: "resource-" + index + "-undesired-" + dateIndex, group: resources.name,
+                content: byResourceDemandElement.html(),
                 start: start, end: end,
                 type: "background",
                 style: "opacity: 0.5; background-color: " + UNDESIRED_COLOR,
@@ -229,43 +229,43 @@ function renderSchedule(schedule) {
         if (demand.resource == null) {
             unassignedDemandsCount++;
 
-            const byConstructionSiteShiftElement = $('<div class="card-body p-2"/>')
+            const byConstructionSiteDemandElement = $('<div class="card-body p-2"/>')
                 .append($(`<h5 class="card-title mb-2"/>)`)
                     .append("Unassigned"))
                 .append($('<div/>')
                     .append($(`<span class="badge me-1 mt-1" style="background-color:#d3d7cf">${demand.requiredQualifications}</span>`)));
 
             byConstructionSiteItemDataSet.add({
-                id: 'shift-' + index, group: demand.constructionSite,
-                content: byConstructionSiteShiftElement.html(),
+                id: 'demand-' + index, group: demand.constructionSite,
+                content: byConstructionSiteDemandElement.html(),
                 start: demand.start, end: demand.end,
                 style: "background-color: #EF292999"
             });
         } else {
             const skillColor = (demand.resource.skills.indexOf(demand.requiredQualifications) === -1 ? '#ef2929' : '#8ae234');
-            const byResourceShiftElement = $('<div class="card-body p-2"/>')
+            const byResourceDemandElement = $('<div class="card-body p-2"/>')
                 .append($(`<h5 class="card-title mb-2"/>)`)
                     .append(demand.constructionSite))
                 .append($('<div/>')
                     .append($(`<span class="badge me-1 mt-1" style="background-color:${skillColor}">${demand.requiredQualifications}</span>`)));
-            const byConstructionSiteShiftElement = $('<div class="card-body p-2"/>')
+            const byConstructionSiteDemandElement = $('<div class="card-body p-2"/>')
                 .append($(`<h5 class="card-title mb-2"/>)`)
                     .append(demand.resource.name))
                 .append($('<div/>')
                     .append($(`<span class="badge me-1 mt-1" style="background-color:${skillColor}">${demand.requiredQualifications}</span>`)));
 
-            const shiftColor = getShiftColor(demand, demand.resource);
+            const demandColor = getDemandColor(demand, demand.resource);
             byResourceItemDataSet.add({
-                id: 'shift-' + index, group: demand.resource.name,
-                content: byResourceShiftElement.html(),
+                id: 'demand-' + index, group: demand.resource.name,
+                content: byResourceDemandElement.html(),
                 start: demand.start, end: demand.end,
-                style: "background-color: " + shiftColor
+                style: "background-color: " + demandColor
             });
             byConstructionSiteItemDataSet.add({
-                id: 'shift-' + index, group: demand.constructionSite,
-                content: byConstructionSiteShiftElement.html(),
+                id: 'demand-' + index, group: demand.constructionSite,
+                content: byConstructionSiteDemandElement.html(),
                 start: demand.start, end: demand.end,
-                style: "background-color: " + shiftColor
+                style: "background-color: " + demandColor
             });
         }
     });

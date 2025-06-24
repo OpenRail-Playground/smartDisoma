@@ -50,20 +50,20 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
 
     Constraint requiredResourceCategory(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Demand.class)
-                .filter(shift -> !shift.getEmployee().getResourceCategory().equals(shift.getRequiredResourceCategory()))
+                .filter(shift -> !shift.getResource().getResourceCategory().equals(shift.getRequiredResourceCategory()))
                 .penalize(HardSoftBigDecimalScore.ONE_HARD)
                 .asConstraint("Missing required resource category");
     }
 
     Constraint requiredQualifications(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Demand.class)
-                .filter(shift -> !shift.getEmployee().getQualifications().containsAll(shift.getRequiredQualifications()))
+                .filter(shift -> !shift.getResource().getQualifications().containsAll(shift.getRequiredQualifications()))
                 .penalize(HardSoftBigDecimalScore.ONE_HARD)
                 .asConstraint("Missing required qualification");
     }
 
     Constraint noOverlappingShifts(ConstraintFactory constraintFactory) {
-        return constraintFactory.forEachUniquePair(Demand.class, equal(Demand::getEmployee),
+        return constraintFactory.forEachUniquePair(Demand.class, equal(Demand::getResource),
                 overlapping(Demand::getStart, Demand::getEnd))
                 .penalize(HardSoftBigDecimalScore.ONE_HARD,
                         EmployeeSchedulingConstraintProvider::getMinuteOverlap)
@@ -72,7 +72,7 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
 
     Constraint atLeast10HoursBetweenTwoShifts(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Demand.class)
-                .join(Demand.class, equal(Demand::getEmployee), lessThanOrEqual(Demand::getEnd, Demand::getStart))
+                .join(Demand.class, equal(Demand::getResource), lessThanOrEqual(Demand::getEnd, Demand::getStart))
                 .filter((firstShift,
                         secondShift) -> Duration.between(firstShift.getEnd(), secondShift.getStart()).toHours() < 10)
                 .penalize(HardSoftBigDecimalScore.ONE_HARD,
@@ -84,7 +84,7 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
     }
 
     Constraint oneShiftPerDay(ConstraintFactory constraintFactory) {
-        return constraintFactory.forEachUniquePair(Demand.class, equal(Demand::getEmployee),
+        return constraintFactory.forEachUniquePair(Demand.class, equal(Demand::getResource),
                 equal(shift -> shift.getStart().toLocalDate()))
                 .penalize(HardSoftBigDecimalScore.ONE_HARD)
                 .asConstraint("Max one shift per day");
@@ -92,7 +92,7 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
 
     Constraint unavailableEmployee(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Demand.class)
-                .join(Resource.class, equal(Demand::getEmployee, Function.identity()))
+                .join(Resource.class, equal(Demand::getResource, Function.identity()))
                 .flattenLast(Resource::getUnavailableDates)
                 .filter(Demand::isOverlappingWithDate)
                 .penalize(HardSoftBigDecimalScore.ONE_HARD, Demand::getOverlappingDurationInMinutes)
@@ -101,7 +101,7 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
 
     Constraint undesiredDayForEmployee(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Demand.class)
-                .join(Resource.class, equal(Demand::getEmployee, Function.identity()))
+                .join(Resource.class, equal(Demand::getResource, Function.identity()))
                 .flattenLast(Resource::getUndesiredDates)
                 .filter(Demand::isOverlappingWithDate)
                 .penalize(HardSoftBigDecimalScore.ONE_SOFT, Demand::getOverlappingDurationInMinutes)
@@ -110,7 +110,7 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
 
     Constraint balanceEmployeeShiftAssignments(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Demand.class)
-                .groupBy(Demand::getEmployee, ConstraintCollectors.count())
+                .groupBy(Demand::getResource, ConstraintCollectors.count())
                 .complement(Resource.class, e -> 0) // Include all employees which are not assigned to any shift.c
                 .groupBy(ConstraintCollectors.loadBalance((employee, shiftCount) -> employee,
                         (employee, shiftCount) -> shiftCount))

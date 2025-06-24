@@ -57,7 +57,7 @@ class ResourceScheduleResourceTest {
         assertNotNull(solution.getDemands());
         assertFalse(solution.getDemands().isEmpty());
         for (Demand demand : solution.getDemands()) {
-            assertNotNull(demand.getEmployee());
+            assertNotNull(demand.getResource());
         }
         assertTrue(solution.getScore().isFeasible());
     }

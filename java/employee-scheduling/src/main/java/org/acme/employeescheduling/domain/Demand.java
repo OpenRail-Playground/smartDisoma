@@ -86,11 +86,11 @@ public class Demand {
         this.requiredResourceCategory = requiredResourceCategory;
     }
 
-    public Resource getEmployee() {
+    public Resource getResource() {
         return resource;
     }
 
-    public void setEmployee(Resource resource) {
+    public void setResource(Resource resource) {
         this.resource = resource;
     }
 

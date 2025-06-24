@@ -29,6 +29,7 @@ public class DemoDataGenerator {
     public enum DemoData {
         SMALL(new DemoDataParameters(
                 List.of("Ambulatory care", "Critical care", "Pediatric care"),
+                List.of(),
                 List.of("Doctor", "Nurse"),
                 List.of("Anaesthetics", "Cardiology"),
                 14,
@@ -54,6 +55,7 @@ public class DemoDataGenerator {
                         "Surgery",
                         "Radiology",
                         "Outpatient"),
+                List.of(),
                 List.of("Doctor", "Nurse"),
                 List.of("Anaesthetics", "Cardiology", "Radiology"),
                 28,
@@ -86,31 +88,32 @@ public class DemoDataGenerator {
 
     public record CountDistribution(int count, double weight) {}
 
-    public record DemoDataParameters(List<String> locations,
-                                     List<String> requiredSkills,
-                                     List<String> optionalSkills,
+    public record DemoDataParameters(List<String> constructionSite,
+                                     List<String> requiredResourceCategories,
+                                     List<String> requiredQualifications,
+                                     List<String> optionalQualifications,
                                      int daysInSchedule,
-                                     int employeeCount,
-                                     List<CountDistribution> optionalSkillDistribution,
-                                     List<CountDistribution> shiftCountDistribution,
+                                     int resourceCount,
+                                     List<CountDistribution> optionalQualificationDistribution,
+                                     List<CountDistribution> demandCountDistribution,
                                      List<CountDistribution> availabilityCountDistribution,
                                      int randomSeed) {}
 
     private static final String[] FIRST_NAMES = { "Amy", "Beth", "Carl", "Dan", "Elsa", "Flo", "Gus", "Hugo", "Ivy", "Jay" };
     private static final String[] LAST_NAMES = { "Cole", "Fox", "Green", "Jones", "King", "Li", "Poe", "Rye", "Smith", "Watt" };
-    private static final Duration SHIFT_LENGTH = Duration.ofHours(8);
-    private static final LocalTime MORNING_SHIFT_START_TIME = LocalTime.of(6, 0);
-    private static final LocalTime DAY_SHIFT_START_TIME = LocalTime.of(9, 0);
-    private static final LocalTime AFTERNOON_SHIFT_START_TIME = LocalTime.of(14, 0);
-    private static final LocalTime NIGHT_SHIFT_START_TIME = LocalTime.of(22, 0);
+    private static final Duration DEMAND_LENGTH = Duration.ofHours(8);
+    private static final LocalTime MORNING_DEMAND_START_TIME = LocalTime.of(6, 0);
+    private static final LocalTime DAY_DEMAND_START_TIME = LocalTime.of(9, 0);
+    private static final LocalTime AFTERNOON_DEMAND_START_TIME = LocalTime.of(14, 0);
+    private static final LocalTime NIGHT_DEMAND_START_TIME = LocalTime.of(22, 0);
 
-    static final LocalTime[][] SHIFT_START_TIMES_COMBOS = {
-            { MORNING_SHIFT_START_TIME, AFTERNOON_SHIFT_START_TIME },
-            { MORNING_SHIFT_START_TIME, AFTERNOON_SHIFT_START_TIME, NIGHT_SHIFT_START_TIME },
-            { MORNING_SHIFT_START_TIME, DAY_SHIFT_START_TIME, AFTERNOON_SHIFT_START_TIME, NIGHT_SHIFT_START_TIME },
+    static final LocalTime[][] DEMAND_START_TIMES_COMBOS = {
+            { MORNING_DEMAND_START_TIME, AFTERNOON_DEMAND_START_TIME },
+            { MORNING_DEMAND_START_TIME, AFTERNOON_DEMAND_START_TIME, NIGHT_DEMAND_START_TIME },
+            { MORNING_DEMAND_START_TIME, DAY_DEMAND_START_TIME, AFTERNOON_DEMAND_START_TIME, NIGHT_DEMAND_START_TIME },
     };
 
-    Map<String, List<LocalTime>> locationToShiftStartTimeListMap = new HashMap<>();
+    Map<String, List<LocalTime>> locationToDemandStartTimeListMap = new HashMap<>();
 
     public Schedule generateDemoData(DemoData demoData) {
         return generateDemoData(demoData.getParameters());
@@ -123,21 +126,21 @@ public class DemoDataGenerator {
 
         Random random = new Random(parameters.randomSeed);
 
-        int shiftTemplateIndex = 0;
-        for (String location : parameters.locations) {
-            locationToShiftStartTimeListMap.put(location, List.of(SHIFT_START_TIMES_COMBOS[shiftTemplateIndex]));
-            shiftTemplateIndex = (shiftTemplateIndex + 1) % SHIFT_START_TIMES_COMBOS.length;
+        int demandTemplateIndex = 0;
+        for (String location : parameters.constructionSite) {
+            locationToDemandStartTimeListMap.put(location, List.of(DEMAND_START_TIMES_COMBOS[demandTemplateIndex]));
+            demandTemplateIndex = (demandTemplateIndex + 1) % DEMAND_START_TIMES_COMBOS.length;
         }
 
         List<String> namePermutations = joinAllCombinations(FIRST_NAMES, LAST_NAMES);
         Collections.shuffle(namePermutations, random);
 
         List<Resource> resources = new ArrayList<>();
-        for (int i = 0; i < parameters.employeeCount; i++) {
+        for (int i = 0; i < parameters.resourceCount; i++) {
             String resourceCategory = "ResourceCategory"; // TODO generate value
-            Set<String> qualifications = pickSubset(parameters.optionalSkills, random, parameters.optionalSkillDistribution);
+            Set<String> qualifications = pickSubset(parameters.optionalQualifications, random, parameters.optionalQualificationDistribution);
             String team = "team"; // TODO generate value
-            qualifications.add(pickRandom(parameters.requiredSkills, random));
+            qualifications.add(pickRandom(parameters.requiredQualifications, random));
             Resource resource = new Resource(namePermutations.get(i), resourceCategory, qualifications, new LinkedHashSet<>(), new LinkedHashSet<>(), team);
             resources.add(resource);
         }
@@ -145,50 +148,50 @@ public class DemoDataGenerator {
 
         List<Demand> demands = new LinkedList<>();
         for (int i = 0; i < parameters.daysInSchedule; i++) {
-            Set<Resource> employeesWithAvailabilitiesOnDay = pickSubset(resources, random,
+            Set<Resource> resourceWithAvailabilitiesOnDay = pickSubset(resources, random,
                     parameters.availabilityCountDistribution);
             LocalDate date = startDate.plusDays(i);
-            for (Resource resource : employeesWithAvailabilitiesOnDay) {
+            for (Resource resource : resourceWithAvailabilitiesOnDay) {
                 switch (random.nextInt(3)) {
                     case 0 -> resource.getUnavailableDates().add(date);
                     case 1 -> resource.getUndesiredDates().add(date);
                 }
             }
-            demands.addAll(generateShiftsForDay(parameters, date, random));
+            demands.addAll(generateDemandsForDay(parameters, date, random));
         }
-        AtomicInteger countShift = new AtomicInteger();
-        demands.forEach(s -> s.setId(Integer.toString(countShift.getAndIncrement())));
+        AtomicInteger countDemand = new AtomicInteger();
+        demands.forEach(s -> s.setId(Integer.toString(countDemand.getAndIncrement())));
         schedule.setDemands(demands);
 
         return schedule;
     }
 
-    private List<Demand> generateShiftsForDay(DemoDataParameters parameters, LocalDate date, Random random) {
+    private List<Demand> generateDemandsForDay(DemoDataParameters parameters, LocalDate date, Random random) {
         List<Demand> demands = new LinkedList<>();
-        for (String location : parameters.locations) {
-            List<LocalTime> shiftStartTimes = locationToShiftStartTimeListMap.get(location);
-            for (LocalTime shiftStartTime : shiftStartTimes) {
-                LocalDateTime shiftStartDateTime = date.atTime(shiftStartTime);
-                LocalDateTime shiftEndDateTime = shiftStartDateTime.plus(SHIFT_LENGTH);
-                demands.addAll(generateShiftForTimeslot(parameters, shiftStartDateTime, shiftEndDateTime, location, random));
+        for (String location : parameters.constructionSite) {
+            List<LocalTime> demandStartTimes = locationToDemandStartTimeListMap.get(location);
+            for (LocalTime demandStartTime : demandStartTimes) {
+                LocalDateTime demandStartDateTime = date.atTime(demandStartTime);
+                LocalDateTime demandEndDateTime = demandStartDateTime.plus(DEMAND_LENGTH);
+                demands.addAll(generateDemandForTimeslot(parameters, demandStartDateTime, demandEndDateTime, location, random));
             }
         }
         return demands;
     }
 
-    private List<Demand> generateShiftForTimeslot(DemoDataParameters parameters,
+    private List<Demand> generateDemandForTimeslot(DemoDataParameters parameters,
             LocalDateTime timeslotStart, LocalDateTime timeslotEnd, String constructionSite,
             Random random) {
-        var shiftCount = pickCount(random, parameters.shiftCountDistribution);
+        var demandCount = pickCount(random, parameters.demandCountDistribution);
 
         List<Demand> demands = new LinkedList<>();
-        for (int i = 0; i < shiftCount; i++) {
+        for (int i = 0; i < demandCount; i++) {
             String requiredResourceCategory;
             Set<String> requiredQualification = Set.of(); // TODO fill qualification
             if (random.nextBoolean()) {
-                requiredResourceCategory = pickRandom(parameters.requiredSkills, random);
+                requiredResourceCategory = pickRandom(parameters.requiredQualifications, random);
             } else {
-                requiredResourceCategory = pickRandom(parameters.optionalSkills, random);
+                requiredResourceCategory = pickRandom(parameters.optionalQualifications, random);
             }
             demands.add(new Demand(timeslotStart, timeslotEnd, constructionSite, requiredResourceCategory, requiredQualification));
         }
