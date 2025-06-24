@@ -98,8 +98,9 @@ public class DemoDataGenerator {
     }
 
     private Resource generateResource() {
+        Faker faker = new Faker();
         return Instancio.of(Resource.class)
-            .supply(field(Resource::getName), res -> new Faker().funnyName().name())
+            .supply(field(Resource::getName), res -> faker.unique().fetchFromYaml("funny_name.name"))
             .supply(field(Resource::getResourceCategory), res -> getRandomValueFrom(StaticDataProvider.getResourceCategories()))
             .supply(field(Resource::getQualifications), res -> randomQualifications())
             .create();
