@@ -140,4 +140,10 @@ public class Demand {
     public int hashCode() {
         return getId().hashCode();
     }
+
+    public boolean isNightShift() {
+        return getOverlappingDurationInMinutes(this.start, this.end,
+            LocalDateTime.of(this.end.toLocalDate(), LocalTime.parse("00:00:00")),
+            LocalDateTime.of(this.end.toLocalDate(), LocalTime.parse("04:00:00"))) > 0;
+    }
 }
