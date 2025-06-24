@@ -85,7 +85,7 @@ public class DemoDataGenerator {
     public Schedule generateDemoData(DemoData demoData) {
         Schedule schedule = new Schedule();
 
-        schedule.setDemands(DemandDataProvider.readDemands().subList(0, 200));
+        schedule.setDemands(DemandDataProvider.readDemands().subList(0, 1000));
 
         schedule.setResources(IntStream.range(0, 73)
             .mapToObj(i -> generateResource())
