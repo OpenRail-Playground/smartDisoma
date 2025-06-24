@@ -40,6 +40,12 @@
 
   <dependencies>
     <!-- https://mvnrepository.com/artifact/org.instancio/instancio-core -->
+    <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-csv -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-csv</artifactId>
+      <version>1.14.0</version>
+    </dependency>
     <dependency>
       <groupId>org.instancio</groupId>
       <artifactId>instancio-core</artifactId>

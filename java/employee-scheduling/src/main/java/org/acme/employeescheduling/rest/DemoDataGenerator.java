@@ -129,9 +129,9 @@ public class DemoDataGenerator {
     }
 
     private Resource generateResource() {
-
         return Instancio.of(Resource.class)
             .supply(field(Resource::getName), res -> new Faker().funnyName().name())
+            .supply(field(Resource::getResourceCategory), )
             .create();
     }
 
