@@ -48,7 +48,6 @@ public class DemandDataProvider {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(wrongLines);
         return demands;
     }
 
