@@ -13,11 +13,12 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class DemandDataProvider {
 
-    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     public static void main(String[] args) throws IOException {
         var demands = new DemandDataProvider().readDemands();
@@ -25,13 +26,13 @@ public class DemandDataProvider {
     }
 
     public List<Demand> readDemands() {
-        File csvData = new File("java/employee-scheduling/src/main/resources/BSA_Export_Schichten_Mai-bis-August.xlsx");
+        File csvData = new File("java/employee-scheduling/src/main/resources/BSA_Export_Schichten_Mai-bis-August.csv");
         List<Demand> demands = new LinkedList<>();
         int currentId = 0;
         int wrongLines = 0;
         try {
             Reader reader = new FileReader(csvData);
-            CSVParser parser = new CSVParser(reader, CSVFormat.newFormat(';'));
+            CSVParser parser = new CSVParser(reader, CSVFormat.newFormat(';').withFirstRecordAsHeader());
             var records = parser.getRecords();
             for (CSVRecord csvRecord : records) {
                 Demand demand = new Demand();
@@ -43,8 +44,7 @@ public class DemandDataProvider {
                     demand.setRequiredResourceCategory(getRequiredResourceCategory(csvRecord));
                     demand.setRequiredQualifications(getRequiredQualifications(csvRecord));
                     demands.add(demand);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     wrongLines++;
                     // ignore all invalid input data
                 }
@@ -73,8 +73,7 @@ public class DemandDataProvider {
         return record.get("Ressourcenkategorie-Typ");
     }
 
-    private Set<String> getRequiredQualifications(CSVRecord record)
-    {
+    private Set<String> getRequiredQualifications(CSVRecord record) {
         return Set.of(record.get("Qualifikationen").split(","));
     }
 }
