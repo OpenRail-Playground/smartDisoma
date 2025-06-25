@@ -55,16 +55,11 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
                 unassignedDemandPenalty(constraintFactory)
         };
     }
-    private int calculateUnassignedPenalty(Demand demand) {
-        int basePenalty = 100; 
-        int durationHours = (int) Duration.between(demand.getStart(), demand.getEnd()).toHours();
-        return basePenalty + durationHours; // Add 1 point per hour
-     }
 
     Constraint unassignedDemandPenalty(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Demand.class)
             .filter(demand -> demand.isAssigned())
-            .reward(HardSoftBigDecimalScore.ONE_SOFT, demand -> {return 1000;})
+            .reward(HardSoftBigDecimalScore.ONE_SOFT)
             .asConstraint("Unassigned demand penalty");
         }
 
