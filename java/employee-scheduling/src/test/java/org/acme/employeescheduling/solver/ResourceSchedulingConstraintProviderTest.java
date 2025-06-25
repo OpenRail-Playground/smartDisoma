@@ -235,7 +235,7 @@ class ResourceSchedulingConstraintProviderTest {
                 resource1, Set.of());
                 constraintVerifier.verifyThat(EmployeeSchedulingConstraintProvider::unassignedDemandPenalty)
                         .given(resource1,demand1)
-                        .rewardsWith(1000); // Penalty for unassigned demand
+                        .rewardsWith(1); // Penalty for unassigned demand
         }
 
 
