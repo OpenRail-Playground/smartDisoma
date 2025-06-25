@@ -25,7 +25,7 @@ public class Demand {
     private String requiredResourceCategory;
     private Set<String> requiredQualifications;
 
-    @PlanningVariable
+     @PlanningVariable(valueRangeProviderRefs = "resourceRange",nullable = true)
     private Resource resource;
 
     public Demand() {
@@ -94,12 +94,18 @@ public class Demand {
         this.requiredResourceCategory = requiredResourceCategory;
     }
 
+
     public Resource getResource() {
         return resource;
     }
 
     public void setResource(Resource resource) {
         this.resource = resource;
+    }
+
+    // Helper method to check if assigned
+    public boolean isAssigned() {
+        return resource != null;
     }
 
     public Set<String> getRequiredQualifications() {

@@ -213,4 +213,30 @@ class ResourceSchedulingConstraintProviderTest {
                         .given(resource1, resource2, resource3, demand1, demand2, demand3)
                         .rewardsWith(1); // All demands are from the same team
         }
+
+        @Test
+        void rewardTeamStabilityAndOne(){
+                Resource resource1 = new Resource("Amy", null, null, null, null, "teamA");
+                Resource resource2 = new Resource("Beth", null, null, null, null, "teamA");
+                Resource resource3 = new Resource("Charlie", null, null, null, null, "teamA");
+                
+                Demand demand1 = new Demand("1", DAY_START_TIME, DAY_END_TIME, "Location", "Skill", resource1, Set.of());
+                Demand demand2 = new Demand("2", DAY_START_TIME, DAY_END_TIME, "Location", "Skill", resource2, Set.of());
+                Demand demand3 = new Demand("3", DAY_START_TIME, DAY_END_TIME, "Location", "Skill", resource3, Set.of());
+                constraintVerifier.verifyThat(EmployeeSchedulingConstraintProvider::teamStability)
+                        .given(resource1, resource2, resource3, demand1, demand2, demand3)
+                        .rewardsWith(2); // All demands are from the same team
+        }
+
+        @Test
+        void penaltyUnassignedDemand() {
+                Resource resource1 = new Resource("Amy", null, null, null, null, "teamA");
+                Demand demand1 = new Demand("1", DAY_START_TIME, DAY_END_TIME, "Location", "Skill", 
+                resource1, Set.of());
+                constraintVerifier.verifyThat(EmployeeSchedulingConstraintProvider::unassignedDemandPenalty)
+                        .given(resource1,demand1)
+                        .rewardsWith(1000); // Penalty for unassigned demand
+        }
+
+
 }

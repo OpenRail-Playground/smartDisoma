@@ -14,7 +14,7 @@ import ai.timefold.solver.core.api.solver.SolverStatus;
 public class Schedule {
 
     @ProblemFactCollectionProperty
-    @ValueRangeProvider
+    @ValueRangeProvider(id = "resourceRange")
     private List<Resource> resources;
 
     @PlanningEntityCollectionProperty

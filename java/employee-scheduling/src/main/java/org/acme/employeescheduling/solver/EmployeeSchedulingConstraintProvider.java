@@ -2,7 +2,6 @@ package org.acme.employeescheduling.solver;
 
 import static ai.timefold.solver.core.api.score.stream.Joiners.equal;
 import static ai.timefold.solver.core.api.score.stream.Joiners.filtering;
-import static ai.timefold.solver.core.api.score.stream.Joiners.lessThan;
 import static ai.timefold.solver.core.api.score.stream.Joiners.lessThanOrEqual;
 import static ai.timefold.solver.core.api.score.stream.Joiners.overlapping;
 
@@ -22,7 +21,6 @@ import ai.timefold.solver.core.api.score.stream.common.LoadBalance;
 
 import org.acme.employeescheduling.domain.Demand;
 import org.acme.employeescheduling.domain.Resource;
-import org.apache.commons.math3.util.Pair;
 
 public class EmployeeSchedulingConstraintProvider implements ConstraintProvider {
 
@@ -53,20 +51,33 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
                 constructionSiteSwitching(constraintFactory),
                 shiftChanges(constraintFactory),
                 balanceNightShifts(constraintFactory),
-                teamStability(constraintFactory)
+                teamStability(constraintFactory),
+                unassignedDemandPenalty(constraintFactory)
         };
     }
+    private int calculateUnassignedPenalty(Demand demand) {
+        int basePenalty = 100; 
+        int durationHours = (int) Duration.between(demand.getStart(), demand.getEnd()).toHours();
+        return basePenalty + durationHours; // Add 1 point per hour
+     }
+
+    Constraint unassignedDemandPenalty(ConstraintFactory constraintFactory) {
+        return constraintFactory.forEach(Demand.class)
+            .filter(demand -> demand.isAssigned())
+            .reward(HardSoftBigDecimalScore.ONE_SOFT, demand -> {return 1000;})
+            .asConstraint("Unassigned demand penalty");
+        }
 
     Constraint requiredResourceCategory(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Demand.class)
-                .filter(shift -> !shift.getResource().getResourceCategory().equals(shift.getRequiredResourceCategory()))
+                .filter(shift -> shift.isAssigned() && !shift.getResource().getResourceCategory().equals(shift.getRequiredResourceCategory()))
                 .penalize(HardSoftBigDecimalScore.ONE_SOFT)
                 .asConstraint("Missing required resource category");
     }
 
     Constraint requiredQualifications(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Demand.class)
-                .filter(shift -> !shift.getResource().getQualifications().containsAll(shift.getRequiredQualifications()))
+                .filter(shift -> shift.isAssigned() && !shift.getResource().getQualifications().containsAll(shift.getRequiredQualifications()))
                 .penalize(HardSoftBigDecimalScore.ONE_HARD)
                 .asConstraint("Missing required qualification");
     }
@@ -125,7 +136,7 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
             .forEach(Demand.class)
             .join(Demand.class,
                 equal(Demand::getResource),
-                filtering((d1, d2) -> consecutiveDemandsWithinDays(d1, d2, 4)))  //
+                filtering((d1, d2) -> consecutiveDemandsWithinDays(d1, d2, 2)))  //
             .filter((demand1, demand2) -> demand1.getConstructionSite().equals(demand2.getConstructionSite()))
             .reward(HardSoftBigDecimalScore.ONE_SOFT) // TODO may need a reward value
             .asConstraint("Resource switching construction site");
@@ -168,7 +179,7 @@ public class EmployeeSchedulingConstraintProvider implements ConstraintProvider 
                         demand -> demand.getResource().getTeam(), // Group by team
                         ConstraintCollectors.count())             // Count team members
                 .filter((shiftId, team, count) -> count > 1)        // More than 1 team member
-                .reward(HardSoftScore.ONE_SOFT, 
+                .reward(HardSoftBigDecimalScore.ONE_SOFT, 
                         (shiftId, team, count) -> calculateTeamBonus(count))
                 .asConstraint("Reward team cohesion");
         }
